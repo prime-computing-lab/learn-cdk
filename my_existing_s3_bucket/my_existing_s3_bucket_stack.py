@@ -28,11 +28,33 @@ class MyExistingS3BucketStack(Stack):
               {
                 'bucketKeyEnabled': True,
                 'serverSideEncryptionByDefault': {
-                  'sseAlgorithm': 'AES256',
+                  'sseAlgorithm': 'aws:kms',
+                  'kmsMasterKeyId': 'arn:aws:kms:ap-southeast-2:781953648079:alias/aws/s3',
                 },
               },
             ],
           },
+          versioning_configuration = {
+            'status': 'Enabled',
+          },
+          lifecycle_configuration = {
+            'transitionDefaultMinimumObjectSize': 'all_storage_classes_128K',
+            'rules': [
+              {
+                'status': 'Enabled',
+                'id': 'expire_objects',
+                'noncurrentVersionExpiration': {
+                  'noncurrentDays': 1,
+                },
+                'expirationInDays': 30,
+              },
+            ],
+          },
+          tags=[
+              cdk.CfnTag(key='environment', value='production'),
+              cdk.CfnTag(key='cost-centre', value='1000')  # New tag added
+          ],
+
         )
     s3Bucket00aaclsands32024011900pIrkZ.cfn_options.deletion_policy = cdk.CfnDeletionPolicy.RETAIN
     s3Bucket00aaclsands32024011900pIrkZ.cfn_options.update_replace_policy = cdk.CfnDeletionPolicy.RETAIN
@@ -57,9 +79,22 @@ class MyExistingS3BucketStack(Stack):
                 'Principal': '*',
                 'Sid': 'RestrictToTLSRequestsOnly',
               },
+              {
+                'Condition': {
+                  'Null': {
+                    's3:x-amz-server-side-encryption-aws-kms-key-id': 'true',
+                  },
+                },
+                'Resource': 'arn:aws:s3:::aaclsands320240119/*',
+                'Action': 's3:PutObject',
+                'Effect': 'Deny',
+                'Principal': '*',
+                'Sid': 'DenyObjectsThatAreNotSSEKMS',
+              },
             ],
             'Id': 'PutObjPolicy',
           },
+ 
         )
     s3BucketPolicy00aaclsands32024011900Gp3Ut.cfn_options.deletion_policy = cdk.CfnDeletionPolicy.RETAIN
     s3BucketPolicy00aaclsands32024011900Gp3Ut.cfn_options.update_replace_policy = cdk.CfnDeletionPolicy.RETAIN
