@@ -1,58 +1,82 @@
 
-# Welcome to your CDK Python project!
+# Import Existing AWS Resources into CDK (IaC)
 
-This is a blank project for CDK development with Python.
+This project demonstrates how to import an **existing S3 bucket** into AWS CDK (Infrastructure-as-Code) for governance and auditability.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Steps
 
-This project is set up like a standard Python project.  The initialization
-process also creates a virtualenv within this project, stored under the `.venv`
-directory.  To create the virtualenv it assumes that there is a `python3`
-(or `python` for Windows) executable in your path with access to the `venv`
-package. If for any reason the automatic creation of the virtualenv fails,
-you can create the virtualenv manually.
+### 1. Prerequisites
+- AWS CLI configured with SSO/admin access
+- CDK v2+ installed
+- Python 3.9+
 
-To manually create a virtualenv on MacOS and Linux:
+### 2. Use CloudFormation IaC Generator
+1. **Scan resources**: In CloudFormation Console > **IaC Generator**, scan your AWS account.
+2. **Create template**:
+   - Select the S3 bucket and related resources (e.g., bucket policies)
+   - Set **Deletion Policy** and **Update Replace Policy** to `Retain` to avoid data loss.
+3. **Import as stack**: Deploy the generated template as `myExistingS3Bucket`.
 
-```
-$ python3 -m venv .venv
-```
-
-After the init process completes and the virtualenv is created, you can use the following
-step to activate your virtualenv.
-
-```
-$ source .venv/bin/activate
-```
-
-If you are a Windows platform, you would activate the virtualenv like this:
-
-```
-% .venv\Scripts\activate.bat
+### 3. Generate CDK Code
+```bash
+cdk migrate --stack-name myExistingS3Bucket --from-stack --language python
+cd myExistingS3Bucket
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Once the virtualenv is activated, you can install the required dependencies.
+### 4.  Modify Configuration (Example: Enable Versioning)
+Update my_existing_s3_bucket_stack.py:
 
+#### Add versioning, encryption, lifecycle policies
+```python
+bucket = s3.CfnBucket(
+    ...,
+    versioning_configuration={"status": "Enabled"},
+    bucket_encryption = {
+            'serverSideEncryptionConfiguration': [
+              {
+                'bucketKeyEnabled': True,
+                'serverSideEncryptionByDefault': {
+                  'sseAlgorithm': 'aws:kms',
+                  'kmsMasterKeyId': '<s3-kms-arn>',
+                },
+              },
+            ],
+          },
+
+  lifecycle_configuration = {
+            'transitionDefaultMinimumObjectSize': 'all_storage_classes_128K',
+            'rules': [
+              {
+                'status': 'Enabled',
+                'id': 'expire_objects',
+                'noncurrentVersionExpiration': {
+                  'noncurrentDays': 1,
+                },
+                'expirationInDays': 30,
+              },
+            ],
+          },
+    tags=[
+              cdk.CfnTag(key='environment', value='dev'),
+              cdk.CfnTag(key='cost-centre', value='1000') 
+          ],
+)
 ```
-$ pip install -r requirements.txt
+### 5. Deploy & Validate
+```bash
+cdk diff  # Review changes
+cdk deploy
 ```
-
-At this point you can now synthesize the CloudFormation template for this code.
-
+### 6. Push to Git
+```bash
+git init
+git add .
+git commit -m "Initial IaC import"
+git remote add origin <https://your-remote-git-repo>
+git push -u origin main
 ```
-$ cdk synth
-```
-
-To add additional dependencies, for example other CDK libraries, just add
-them to your `setup.py` file and rerun the `pip install -r requirements.txt`
-command.
-
-## Useful commands
-
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
-
-Enjoy!
+## Contributing
+PRs welcome! 
