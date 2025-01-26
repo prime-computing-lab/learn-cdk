@@ -78,5 +78,14 @@ git commit -m "Initial IaC import"
 git remote add origin <https://your-remote-git-repo>
 git push -u origin main
 ```
+
+## Best Practices
+
+- Always review `cdk diff` output before deploying
+- Test changes in a non-production environment first
+- Use meaningful commit messages for better version control
+
+For a detailed walkthrough, check out the (youtube-link-here).
+
 ## Contributing
 PRs welcome! 
