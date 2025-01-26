@@ -3,6 +3,8 @@
 
 This project demonstrates how to import an **existing S3 bucket** into AWS CDK (Infrastructure-as-Code) for governance and auditability.
 
+For a detailed walkthrough, check out https://youtu.be/GeGcf17QS18 
+
 ## Steps
 
 ### 1. Prerequisites
@@ -84,8 +86,6 @@ git push -u origin main
 - Always review `cdk diff` output before deploying
 - Test changes in a non-production environment first
 - Use meaningful commit messages for better version control
-
-For a detailed walkthrough, check out the (youtube-link-here).
 
 ## Contributing
 PRs welcome! 
